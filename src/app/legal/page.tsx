@@ -1,117 +1,185 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import {
-  Scale,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  FileText,
-  ChevronRight,
-} from "lucide-react";
-import AppShell from "@/components/layout/AppShell";
-import StatCard from "@/components/ui/StatCard";
-import StatusBadge from "@/components/ui/StatusBadge";
+import { useState, useEffect, useMemo } from 'react';
 
-const OBLIGATIONS = [
-  { id: 1, lawKa: "გარემოსდაცვითი შეფასების კოდექსი", lawEn: "Environmental Assessment Code", obligationKa: "გზშ ანგარიშის წარდგენა", obligationEn: "EIA Report Submission", deadline: "2025-04-30", frequency: "annual", status: "pending", category: "environmentalCode" },
-  { id: 2, lawKa: "ნარჩენების მართვის კოდექსი", lawEn: "Waste Management Code", obligationKa: "ნარჩენების ინვენტარიზაციის ანგარიში", obligationEn: "Waste Inventory Report", deadline: "2025-03-31", frequency: "quarterly", status: "overdue", category: "wasteManagement" },
-  { id: 3, lawKa: "წყლის რესურსების მართვის კანონი", lawEn: "Water Resources Management Law", obligationKa: "წყლის ხარისხის მონიტორინგის ანგარიში", obligationEn: "Water Quality Monitoring Report", deadline: "2025-05-15", frequency: "quarterly", status: "pending", category: "waterResources" },
-  { id: 4, lawKa: "ატმოსფერული ჰაერის დაცვის კანონი", lawEn: "Atmospheric Air Protection Law", obligationKa: "ჰაერის ემისიების წლიური ანგარიში", obligationEn: "Annual Air Emissions Report", deadline: "2025-06-01", frequency: "annual", status: "pending", category: "airQuality" },
-  { id: 5, lawKa: "გარემოსდაცვითი შეფასების კოდექსი", lawEn: "Environmental Assessment Code", obligationKa: "სკრინინგის განცხადება", obligationEn: "Screening Application", deadline: "2025-02-28", frequency: "annual", status: "completed", category: "environmentalCode" },
-  { id: 6, lawKa: "ხმაურის დაცვის ტექნიკური რეგლამენტი", lawEn: "Noise Protection Technical Regulation", obligationKa: "ხმაურის დონის გაზომვის ანგარიში", obligationEn: "Noise Level Measurement Report", deadline: "2025-07-01", frequency: "annual", status: "pending", category: "noiseRegulation" },
-];
+interface Permit {
+  company: string;
+  project: string;
+  permit_type: string;
+  year: string;
+  municipality: string;
+  region: string;
+  address: string;
+  activity: string;
+}
+
+const TYPE_COLORS: Record<string, string> = {
+  'გარემოსდაცვითი გადაწყვეტილება': 'bg-green-100 text-green-800',
+  'გარემოზე ზემოქმედების ნებართვა': 'bg-blue-100 text-blue-800',
+  'სკოპინგი': 'bg-yellow-100 text-yellow-800',
+  'ეკო-ექსპერტიზა': 'bg-gray-100 text-gray-700',
+};
 
 export default function LegalPage() {
-  const t = useTranslations("legal");
-  const tc = useTranslations("common");
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [permits, setPermits] = useState<Permit[]>([]);
+  const [search, setSearch] = useState('');
+  const [yearFilter, setYearFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [regionFilter, setRegionFilter] = useState('');
+  const [activityFilter, setActivityFilter] = useState('');
+  const [expanded, setExpanded] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 50;
 
-  const categories = ["all", "environmentalCode", "wasteManagement", "waterResources", "airQuality", "noiseRegulation"] as const;
+  useEffect(() => {
+    fetch('/data/permits.json').then(r => r.json()).then(setPermits);
+  }, []);
 
-  const filtered = categoryFilter === "all"
-    ? OBLIGATIONS
-    : OBLIGATIONS.filter((o) => o.category === categoryFilter);
+  const years = useMemo(() => {
+    const set = new Set(permits.map(p => p.year).filter(Boolean));
+    return Array.from(set).sort().reverse();
+  }, [permits]);
 
-  const completed = OBLIGATIONS.filter((o) => o.status === "completed").length;
-  const pending = OBLIGATIONS.filter((o) => o.status === "pending").length;
-  const overdue = OBLIGATIONS.filter((o) => o.status === "overdue").length;
+  const types = useMemo(() => {
+    const set = new Set(permits.map(p => p.permit_type).filter(Boolean));
+    return Array.from(set);
+  }, [permits]);
+
+  const regions = useMemo(() => {
+    const set = new Set(permits.map(p => p.region).filter(Boolean));
+    return Array.from(set).sort();
+  }, [permits]);
+
+  const activities = useMemo(() => {
+    const set = new Set(permits.map(p => p.activity).filter(Boolean));
+    return Array.from(set).sort();
+  }, [permits]);
+
+  const filtered = useMemo(() => {
+    return permits.filter(p => {
+      const q = search.toLowerCase();
+      const matchSearch = !search ||
+        p.company.toLowerCase().includes(q) ||
+        p.project.toLowerCase().includes(q) ||
+        p.municipality.toLowerCase().includes(q);
+      const matchYear = !yearFilter || p.year === yearFilter;
+      const matchType = !typeFilter || p.permit_type === typeFilter;
+      const matchRegion = !regionFilter || p.region === regionFilter;
+      const matchActivity = !activityFilter || p.activity === activityFilter;
+      return matchSearch && matchYear && matchType && matchRegion && matchActivity;
+    });
+  }, [permits, search, yearFilter, typeFilter, regionFilter]);
+
+  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  const totalPages = Math.ceil(filtered.length / PER_PAGE);
+
+  const clearFilters = () => { setSearch(''); setYearFilter(''); setTypeFilter(''); setRegionFilter(''); setActivityFilter(''); setPage(1); };
 
   return (
-    <AppShell>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
-          <p className="text-sm text-gray-500">{t("subtitle")}</p>
-        </div>
+    <div className="p-6">
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;500;600&display=swap'); * { font-family: 'Noto Sans Georgian', sans-serif; }`}</style>
 
-        <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard title={tc("completed")} value={completed} icon={CheckCircle2} color="text-success" />
-          <StatCard title={tc("pending")} value={pending} icon={Clock} color="text-warning" />
-          <StatCard title={tc("overdue")} value={overdue} icon={AlertTriangle} color="text-danger" />
-        </div>
+      <h1 className="text-2xl font-bold text-gray-800 mb-1">გაცემული გარემოსდაცვითი გადაწყვეტილებები</h1>
+      <p className="text-gray-400 text-sm mb-6">სულ: {permits.length.toLocaleString()} · ნაჩვენებია: {filtered.length.toLocaleString()}</p>
 
-        {/* Category Filter */}
-        <div className="flex flex-wrap gap-2">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategoryFilter(cat)}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                categoryFilter === cat
-                  ? "bg-primary text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              {cat === "all" ? tc("all") : t(cat)}
-            </button>
-          ))}
-        </div>
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3 mb-5">
+        <input
+          type="text"
+          placeholder="🔍 კომპანია, პროექტი, მუნიციპალიტეტი..."
+          value={search}
+          onChange={e => { setSearch(e.target.value); setPage(1); }}
+          className="flex-1 min-w-60 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+        />
+        <select value={regionFilter} onChange={e => { setRegionFilter(e.target.value); setPage(1); }}
+          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+          <option value="">ყველა რეგიონი</option>
+          {regions.map(r => <option key={r} value={r}>{r}</option>)}
+        </select>
+        <select value={activityFilter} onChange={e => { setActivityFilter(e.target.value); setPage(1); }}
+          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+          <option value="">ყველა საქმიანობა</option>
+          {activities.map(a => <option key={a} value={a}>{a}</option>)}
+        </select>
+        <select value={typeFilter} onChange={e => { setTypeFilter(e.target.value); setPage(1); }}
+          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+          <option value="">ყველა ტიპი</option>
+          {types.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <select value={yearFilter} onChange={e => { setYearFilter(e.target.value); setPage(1); }}
+          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+          <option value="">ყველა წელი</option>
+          {years.map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+        {(search || yearFilter || typeFilter || regionFilter || activityFilter) && (
+          <button onClick={clearFilters} className="px-3 py-2 text-sm text-gray-500 hover:text-red-500 border border-gray-300 rounded-lg">
+            ✕ გასუფთავება
+          </button>
+        )}
+      </div>
 
-        {/* Obligations Table */}
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gray-50 text-xs uppercase text-gray-500">
-                <tr>
-                  <th className="px-6 py-3">{t("law")}</th>
-                  <th className="px-6 py-3">{t("obligations")}</th>
-                  <th className="px-6 py-3">{t("deadline")}</th>
-                  <th className="px-6 py-3">{t("frequency")}</th>
-                  <th className="px-6 py-3">{tc("status")}</th>
+      {/* Table */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th className="text-left px-4 py-3 font-semibold text-gray-600">კომპანია</th>
+              <th className="text-left px-4 py-3 font-semibold text-gray-600">პროექტი</th>
+              <th className="text-left px-4 py-3 font-semibold text-gray-600 w-36">მუნიციპალიტეტი</th>
+              <th className="text-left px-4 py-3 font-semibold text-gray-600 w-40">ნებართვის ტიპი</th>
+              <th className="text-left px-4 py-3 font-semibold text-gray-600 w-14">წელი</th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginated.length === 0 ? (
+              <tr><td colSpan={5} className="text-center py-12 text-gray-400">ჩანაწერი ვერ მოიძებნა</td></tr>
+            ) : paginated.map((p, i) => (
+              <>
+                <tr
+                  key={i}
+                  onClick={() => setExpanded(expanded === i ? null : i)}
+                  className="border-b border-gray-100 hover:bg-green-50 cursor-pointer transition-colors"
+                >
+                  <td className="px-4 py-3 font-medium text-gray-800">{p.company}</td>
+                  <td className="px-4 py-3 text-gray-600">{p.project}</td>
+                  <td className="px-4 py-3 text-gray-500">{p.municipality || '—'}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_COLORS[p.permit_type] || 'bg-gray-100 text-gray-700'}`}>
+                      {p.permit_type}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-400">{p.year || '—'}</td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filtered.map((o) => (
-                  <tr key={o.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-3">
-                      <div>
-                        <span className="font-medium text-gray-800">{o.lawKa}</span>
-                        <p className="text-xs text-gray-400">{o.lawEn}</p>
+                {expanded === i && (
+                  <tr key={`exp-${i}`} className="bg-green-50 border-b border-green-100">
+                    <td colSpan={5} className="px-6 py-3 text-sm text-gray-600">
+                      <div className="grid grid-cols-2 gap-2">
+                        {p.region && <div><span className="font-medium text-gray-700">რეგიონი: </span>{p.region}</div>}
+                        {p.municipality && <div><span className="font-medium text-gray-700">მუნიციპალიტეტი: </span>{p.municipality}</div>}
+                        {p.activity && <div className="col-span-2"><span className="font-medium text-gray-700">საქმიანობა: </span>{p.activity}</div>}
+                        {p.address && <div className="col-span-2"><span className="font-medium text-gray-700">მისამართი: </span>{p.address}</div>}
                       </div>
-                    </td>
-                    <td className="px-6 py-3">
-                      <div>
-                        <span className="text-gray-700">{o.obligationKa}</span>
-                        <p className="text-xs text-gray-400">{o.obligationEn}</p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-3 text-gray-600">{o.deadline}</td>
-                    <td className="px-6 py-3">
-                      <span className="text-xs text-gray-500">{t(o.frequency)}</span>
-                    </td>
-                    <td className="px-6 py-3">
-                      <StatusBadge status={o.status} label={tc(o.status)} />
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                )}
+              </>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <span className="text-sm text-gray-400">გვერდი {page} / {totalPages}</span>
+          <div className="flex gap-2">
+            <button disabled={page === 1} onClick={() => setPage(p => p - 1)}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50">← წინა</button>
+            <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)}
+              className="px-3 py-2 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50">შემდეგი →</button>
           </div>
         </div>
-      </div>
-    </AppShell>
+      )}
+    </div>
   );
 }
