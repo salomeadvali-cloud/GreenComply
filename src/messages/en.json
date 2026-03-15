@@ -30,7 +30,7 @@
     "medium": "Medium",
     "low": "Low",
     "language": "Language",
-    "georgian": "ქართული",
+    "georgian": "Ã¡Æ’Â¥Ã¡Æ’ÂÃ¡Æ’Â Ã¡Æ’â€”Ã¡Æ’Â£Ã¡Æ’Å¡Ã¡Æ’Ëœ",
     "english": "English"
   },
   "nav": {
@@ -40,20 +40,22 @@
     "iso14001": "ISO 14001",
     "esmp": "ESMP",
     "sep": "SEP",
-    "legal": "Legal",
+    "legal": "Permits",
     "activities": "Activities",
     "audit": "Audit",
     "training": "Training",
     "reports": "Reports",
+    "analytics": "Analytics",
+    "map": "Map",
     "settings": "Settings"
   },
   "home": {
-    "heroTitle": "GreenComply — Your Environmental Digital Assistant",
-    "heroSubtitle": "ISO 14001, ESMP, EIA — everything on one platform. For Georgian MSMEs.",
+    "heroTitle": "GreenComply Ã¢â‚¬â€ Your Environmental Digital Assistant",
+    "heroSubtitle": "ISO 14001, ESMP, EIA Ã¢â‚¬â€ everything on one platform. For Georgian MSMEs.",
     "feature1Title": "ISO 14001:2015",
     "feature1Desc": "Complete environmental management system documentation and monitoring",
     "feature2Title": "EIA Activities Database",
-    "feature2Desc": "50+ activities from the Environmental Assessment Code — Class I & II",
+    "feature2Desc": "50+ activities from the Environmental Assessment Code Ã¢â‚¬â€ Class I & II",
     "feature3Title": "Compliance Monitoring",
     "feature3Desc": "Permit condition deadlines, reminders, and reporting",
     "feature4Title": "Bilingual Platform",
@@ -137,9 +139,9 @@
   },
   "activities": {
     "title": "EIA Activities Database",
-    "subtitle": "Environmental Assessment Code — Class I & II",
-    "classI": "Class I — Full EIA",
-    "classII": "Class II — Screening",
+    "subtitle": "Environmental Assessment Code Ã¢â‚¬â€ Class I & II",
+    "classI": "Class I Ã¢â‚¬â€ Full EIA",
+    "classII": "Class II Ã¢â‚¬â€ Screening",
     "sector": "Sector",
     "activity": "Activity",
     "class": "Class",
@@ -153,3 +155,4 @@
     "wastewater": "Wastewater"
   }
 }
+

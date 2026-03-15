@@ -14,8 +14,8 @@ export default async function HomePage() {
   const modules = [
     { title: "ISO 14001:2015", desc: t("feature1Desc"), href: "/iso14001", tags: ["EMS", "Certification"] },
     { title: "ESMP", desc: "Environmental & Social Management Plan — KPI monitoring", href: "/esmp", tags: ["Management", "KPI"] },
-    { title: "EIA Database", desc: t("feature2Desc"), href: "/activities", tags: ["Class I", "Class II"] },
-    { title: "Compliance", desc: t("feature3Desc"), href: "/monitoring", tags: ["Permits", "Deadlines"] },
+    { title: "გადაწყვეტილებები", desc: "გარემოსდაცვითი ნებართვები და გადაწყვეტილებები — ძებნა, ფილტრაცია რეგიონის, სექტორისა და საქმიანობის მიხედვით.", href: "/permit", tags: ["Permits", "EIA", "სკოპინგი"] },
+    { title: "ანალიტიკა", desc: "ინტერაქტიული გრაფიკები — გადაწყვეტილებები რეგიონის, სექტორის, პროცედურისა და წლების მიხედვით.", href: "/analytics", tags: ["Charts", "Statistics"] },
   ];
 
   const stats = [
